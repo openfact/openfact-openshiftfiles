@@ -3,16 +3,16 @@ kind: Template
 apiVersion: v1
 metadata:
   annotations:
-    description: "Application template for Keycloak (PostgreSQL) 2.5.5.Final"
+    description: "Application template for Keycloak (Mysql) 2.5.5.Final"
     iconClass: "icon-wildfly"
     tags: "keycloak,java,wildfly,jboss"
     version: "1.0.0"
     "openshift.io/display-name": "Keycloak 2.5.5.Final"
-  name: "keycloak-persistent-postgresql"
+  name: "keycloak-persistent-mysql"
   labels:
     app: "${DATABASE_SERVICE_NAME}"
     group: "org.sistcoop"
-message: "A new Keycloak service has been created in your project.\n\n Keycloak Server (Master Realm)\n--------------------\n- Username: ${KEYCLOAK_ADMIN_USER}\n- Password: ${KEYCLOAK_ADMIN_PASSWORD}\n\n PostgreSQL\n--------------------\n- Database: \"${DB_DATABASE}\"\n- Username:${DB_USERNAME}\n- Password: ${DB_PASSWORD}   "
+message: "A new Keycloak service has been created in your project.\n\n Keycloak Server (Master Realm)\n--------------------\n- Username: ${KEYCLOAK_ADMIN_USER}\n- Password: ${KEYCLOAK_ADMIN_PASSWORD}\n\n Mysql\n--------------------\n- Database: \"${DB_DATABASE}\"\n- Username:${DB_USERNAME}\n- Password: ${DB_PASSWORD}   "
 parameters:
   - displayName: "Application Name"
     description: "The name for the application."
@@ -62,14 +62,14 @@ parameters:
     name: "IMAGE_STREAM_NAMESPACE"
     value: "openshift"
     required: true
-  - displayName: "PostgreSQL Image Version"
-    description: "The version of the PostgreSQL image"
-    name: "POSTGRESQL_IMAGE_VERSION"
-    value: "9.5"
+  - displayName: "Mysql Image Version"
+    description: "The version of the Mysql image"
+    name: "MYSQL_IMAGE_VERSION"
+    value: "5.7"
     required": true
   - displayName: "Database Service Name"
     name: "DATABASE_SERVICE_NAME"
-    value: "postgres"
+    value: "mysql"
     required: true
   - displayName: "Keycloak Database Name"
     description: "Database name"
@@ -88,13 +88,25 @@ parameters:
     from: "user[a-zA-Z0-9]{3}"
     generate: "expression"
     required: true
-  - displayName: "PostgreSQL Maximum number of connections"
-    description: "The maximum number of client connections allowed. This also sets the maximum number of prepared transactions."
-    name: "POSTGRESQL_MAX_CONNECTIONS"
+  - displayName: "MySQL Lower Case Table Names"
+    description: "Sets how the table names are stored and compared."
+    name: "MYSQL_LOWER_CASE_TABLE_NAMES"
     required: false
-  - displayName: "PostgreSQL Shared Buffers"
-    description: "Configures how much memory is dedicated to PostgreSQL for caching data."
-    name: "POSTGRESQL_SHARED_BUFFERS"
+  - displayName: "MySQL Maximum number of connections"
+    description: "The maximum permitted number of simultaneous client connections."
+    name: "MYSQL_MAX_CONNECTIONS"
+    required: false
+  - displayName: "MySQL FullText Minimum Word Length"
+    description: "The minimum length of the word to be included in a FULLTEXT index."
+    name: "MYSQL_FT_MIN_WORD_LEN"
+    required: false
+  - displayName: "MySQL FullText Maximum Word Length"
+    description: "The maximum length of the word to be included in a FULLTEXT index."
+    name: "MYSQL_FT_MAX_WORD_LEN"
+    required: false
+  - displayName: "MySQL AIO"
+    description: "Controls the innodb_use_native_aio setting value if the native AIO is broken."
+    name: "MYSQL_AIO"
     required: false
 objects:
   - kind: Service
@@ -122,8 +134,8 @@ objects:
         group: "org.sistcoop"
     spec:
       ports:
-      - port: 5432
-        targetPort: 5432
+      - port: 3306
+        targetPort: 3306
       selector:
         app: "${DATABASE_SERVICE_NAME}"
         group: "org.sistcoop"
@@ -147,7 +159,7 @@ objects:
         app: "${APPLICATION_NAME}"
         group: "org.sistcoop"
     spec:
-      dockerImageRepository: "openfact/keycloak-postgres"
+      dockerImageRepository: "openfact/keycloak-mysql"
   - kind: DeploymentConfig
     apiVersion: v1
     metadata:
@@ -233,7 +245,7 @@ objects:
           - "${DATABASE_SERVICE_NAME}"
           from:
             kind: ImageStreamTag
-            name: "postgresql:${POSTGRESQL_IMAGE_VERSION}"
+            name: "mysql:${MYSQL_IMAGE_VERSION}"
             namespace: "${IMAGE_STREAM_NAMESPACE}"
       replicas: 1
       selector:
@@ -249,27 +261,31 @@ objects:
           terminationGracePeriodSeconds: 60
           containers:
           - name: "${DATABASE_SERVICE_NAME}"
-            image: "postgresql"
+            image: "mysql"
             imagePullPolicy: Always
             ports:
-            - containerPort: 5432
+            - containerPort: 3306
               protocol: TCP
             volumeMounts:
             - mountPath: /var/lib/pgsql/data
               name: "${DATABASE_SERVICE_NAME}-pvol"
             env:
-            - name: POSTGRESQL_USER
+            - name: MYSQL_USER
               value: "${DB_USERNAME}"
-            - name: POSTGRESQL_PASSWORD
+            - name: MYSQL_PASSWORD
               value: "${DB_PASSWORD}"
-            - name: POSTGRESQL_DATABASE
+            - name: MYSQL_DATABASE
               value: "${DB_DATABASE}"
-            - name: POSTGRESQL_MAX_CONNECTIONS
-              value: "${POSTGRESQL_MAX_CONNECTIONS}"
-            - name: POSTGRESQL_MAX_PREPARED_TRANSACTIONS
-              value: "${POSTGRESQL_MAX_CONNECTIONS}"
-            - name: POSTGRESQL_SHARED_BUFFERS
-              value: "${POSTGRESQL_SHARED_BUFFERS}"
+            - name: MYSQL_LOWER_CASE_TABLE_NAMES
+              value: "${MYSQL_LOWER_CASE_TABLE_NAMES}"  
+            - name: MYSQL_MAX_CONNECTIONS
+              value: "${MYSQL_MAX_CONNECTIONS}"
+            - name: MYSQL_FT_MIN_WORD_LEN
+              value: "${MYSQL_FT_MIN_WORD_LEN}"
+            - name: MYSQL_FT_MAX_WORD_LEN
+              value: "${MYSQL_FT_MAX_WORD_LEN}"
+            - name: MYSQL_AIO
+              value: "${MYSQL_AIO}"
           volumes:
           - name: "${DATABASE_SERVICE_NAME}-pvol"
             persistentVolumeClaim:
