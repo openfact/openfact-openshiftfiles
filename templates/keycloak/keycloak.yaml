@@ -19,11 +19,6 @@ parameters:
     name: APPLICATION_NAME
     value: keycloak
     required: true
-  - displayName: "ImageStream Namespace"
-    description: "Namespace in which the ImageStreams for Red Hat Middleware images are installed. These ImageStreams are normally installed in the openshift namespace. You should only need to modify this if you've installed the ImageStreams in a different namespace/project."
-    name: IMAGE_STREAM_NAMESPACE
-    value: openshift
-    required: true
   - displayName: "Keycloak Admin Username"
     description: "Keycloak Server admin username"
     name: KEYCLOAK_ADMIN_USER
@@ -116,7 +111,6 @@ objects:
           - "${APPLICATION_NAME}"
           from:
             kind: ImageStreamTag
-            namespace: "${IMAGE_STREAM_NAMESPACE}"
             name: keycloak:latest
       replicas: 1
       selector:
