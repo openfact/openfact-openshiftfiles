@@ -121,7 +121,7 @@ objects:
     spec:
       ports:
       - port: 8080
-        targetPort: 8080        
+        targetPort: 8080
       selector:
         app: "${APPLICATION_NAME}"
         group: "org.sistcoop"
@@ -267,7 +267,7 @@ objects:
             - containerPort: 3306
               protocol: TCP
             volumeMounts:
-            - mountPath: /var/lib/pgsql/data
+            - mountPath: /var/lib/mysql/data
               name: "${DATABASE_SERVICE_NAME}-pvol"
             env:
             - name: MYSQL_USER
