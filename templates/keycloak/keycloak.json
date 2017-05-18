@@ -9,10 +9,11 @@
       "version": "1.0.0",
       "openshift.io/display-name": "Keycloak 2.5.5.Final"
     },
-    "name": "keycloak"
-  },
-  "labels": {
-    "template": "openfact-keycloak"
+    "name": "keycloak-ephemeral",
+    "labels": {
+      "app": "${APPLICATION_NAME}-ephemeral",
+      "group": "org.sistcoop"
+    }
   },
   "message": "A new Keycloak service has been created in your project.\n\n Keycloak Server (Master Realm)\n--------------------\n- Username: ${KEYCLOAK_ADMIN_USER}\n- Password: ${KEYCLOAK_ADMIN_PASSWORD}",
   "parameters": [
@@ -82,24 +83,25 @@
     {
       "kind": "Service",
       "apiVersion": "v1",
-      "spec": {
-        "ports": [
-          {
-            "port": 8080,
-            "targetPort": 8080
-          }
-        ],
-        "selector": {
-          "deploymentConfig": "${APPLICATION_NAME}"
-        }
-      },
       "metadata": {
         "name": "${APPLICATION_NAME}",
         "labels": {
-          "application": "${APPLICATION_NAME}"
-        },
-        "annotations": {
-          "description": "The web server's http port."
+          "app": "${APPLICATION_NAME}-ephemeral",
+          "group": "org.sistcoop"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "8080-tcp",
+            "port": 8080,
+            "targetPort": 8080,
+            "protocol": "TCP"
+          }
+        ],
+        "selector": {
+          "app": "${APPLICATION_NAME}-ephemeral",
+          "group": "org.sistcoop"
         }
       }
     },
@@ -110,17 +112,30 @@
       "metadata": {
         "name": "${APPLICATION_NAME}",
         "labels": {
-          "application": "${APPLICATION_NAME}"
-        },
-        "annotations": {
-          "description": "Route for application's http service."
+          "app": "${APPLICATION_NAME}-ephemeral",
+          "group": "org.sistcoop"
         }
       },
       "spec": {
         "host": "${HOSTNAME_HTTP}",
         "to": {
+          "kind": "Service",
           "name": "${APPLICATION_NAME}"
         }
+      }
+    },
+    {
+      "kind": "ImageStream",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${APPLICATION_NAME}",
+        "labels": {
+          "app": "${APPLICATION_NAME}-ephemeral",
+          "group": "org.sistcoop"
+        }
+      },
+      "spec": {
+        "dockerImageRepository": "openfact/keycloak"
       }
     },
     {
@@ -129,14 +144,21 @@
       "metadata": {
         "name": "${APPLICATION_NAME}",
         "labels": {
-          "application": "${APPLICATION_NAME}"
+          "app": "${APPLICATION_NAME}-ephemeral",
+          "group": "org.sistcoop"
         }
       },
       "spec": {
         "strategy": {
-          "type": "Recreate"
+          "type": "Rolling",
+          "rollingParams": {
+            "timeoutSeconds": 10800
+          }
         },
         "triggers": [
+          {
+            "type": "ConfigChange"
+          },
           {
             "type": "ImageChange",
             "imageChangeParams": {
@@ -147,32 +169,27 @@
               "from": {
                 "kind": "ImageStreamTag",
                 "namespace": "${IMAGE_STREAM_NAMESPACE}",
-                "name": "keycloak:latest"
+                "name": "${APPLICATION_NAME}:latest"
               }
             }
-          },
-          {
-            "type": "ConfigChange"
           }
         ],
         "replicas": 1,
         "selector": {
-          "deploymentConfig": "${APPLICATION_NAME}"
+          "app": "${APPLICATION_NAME}-ephemeral"
         },
         "template": {
           "metadata": {
-            "name": "${APPLICATION_NAME}",
             "labels": {
-              "deploymentConfig": "${APPLICATION_NAME}",
-              "application": "${APPLICATION_NAME}"
+              "app": "${APPLICATION_NAME}-ephemeral",
+              "group": "org.sistcoop"
             }
           },
           "spec": {
-            "terminationGracePeriodSeconds": 75,
             "containers": [
               {
                 "name": "${APPLICATION_NAME}",
-                "image": "openfact/keycloak:latest",
+                "image": "${APPLICATION_NAME}:latest",
                 "imagePullPolicy": "Always",
                 "lifecycle": {
                   "preStop": {
@@ -219,7 +236,9 @@
                   }
                 ]
               }
-            ]
+            ],
+            "terminationGracePeriodSeconds": 75,
+            "restartPolicy": "Always"
           }
         }
       }
