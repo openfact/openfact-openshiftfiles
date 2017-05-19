@@ -10,7 +10,7 @@ metadata:
     "openshift.io/display-name": "Keycloak 2.5.5.Final"
   name: "keycloak-persistent-postgresql"
   labels:
-    app: "${DATABASE_SERVICE_NAME}"
+    app: "keycloak-persistent"
     group: "org.sistcoop"
 message: "A new Keycloak service has been created in your project.\n\n Keycloak Server (Master Realm)\n--------------------\n Username: ${KEYCLOAK_ADMIN_USER}\n Password: ${KEYCLOAK_ADMIN_PASSWORD}\n\n PostgreSQL\n--------------------\n Service Name: ${DATABASE_SERVICE_NAME}\n Username: ${DB_USERNAME}\n Password: ${DB_PASSWORD}\n Database Name: ${DB_DATABASE}\n Connection URL: postgresql://${DATABASE_SERVICE_NAME}:5432/"
 parameters:

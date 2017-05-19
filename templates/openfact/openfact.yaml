@@ -3,34 +3,26 @@ kind: Template
 apiVersion: v1
 metadata:
   annotations:
-    description: "Application template for Keycloak 2.5.5.Final"
+    description: "Application template for Openfact 1.0.0.Final"
     iconClass: "icon-wildfly"
-    tags: "keycloak,java,wildfly,jboss"
+    tags: "openfact,java,wildfly,jboss"
     version: "1.0.0"
-    "openshift.io/display-name": "Keycloak 2.5.5.Final"
-  name: "keycloak-ephemeral"
+    "openshift.io/display-name": "Openfact 1.0.0.Final"
+  name: "openfact-ephemeral"
   labels:
     app: "${APPLICATION_NAME}-ephemeral"
     group: "org.sistcoop"
-message: "A new Keycloak service has been created in your project.\n\n Keycloak Server (Master Realm)\n--------------------\n- Username: ${KEYCLOAK_ADMIN_USER}\n- Password: ${KEYCLOAK_ADMIN_PASSWORD}"
+message: "A new Openfact service has been created in your project.\n\n Openfact Server\n--------------------\n Server Auth URL: ${KEYCLOAK_AUTH_SERVER_URL}"
 parameters:
   - displayName: "Application Name"
     description: "The name for the application."
     name: APPLICATION_NAME
-    value: keycloak
+    value: openfact
     required: true
-  - displayName: "Keycloak Admin Username"
-    description: "Keycloak Server admin username"
-    name: KEYCLOAK_ADMIN_USER
-    from: "[a-zA-Z0-9]{8}"
-    generate: expression
-    required: true
-  - displayName: "Keycloak Admin Password"
-    description: "Keycloak Server admin  password"
-    name: KEYCLOAK_ADMIN_PASSWORD
-    from: "[a-zA-Z0-9]{8}"
-    generate: expression
-    required: true
+  - displayName: "Keycloak Server Auth URL"
+    description: "Keycloak Server Auth URL"
+    name: KEYCLOAK_AUTH_SERVER_URL
+    required: true  
   - displayName: "Custom http Route Hostname"
     description: "Custom hostname for http service route. Leave blank for default hostname, e.g.: <application-name>.<project>.<default-domain-suffix>"
     name: HOSTNAME_HTTP
@@ -89,7 +81,7 @@ objects:
         app: "${APPLICATION_NAME}-ephemeral"
         group: "org.sistcoop"
     spec:
-      dockerImageRepository: "openfact/keycloak"
+      dockerImageRepository: "openfact/openfact"
   - kind: DeploymentConfig
     apiVersion: v1
     metadata:
@@ -129,7 +121,7 @@ objects:
               preStop:
                 exec:
                   command:
-                  - "/opt/jboss/keycloak/bin/jboss-cli.sh"
+                  - "/opt/jboss/wildfly/bin/jboss-cli.sh"
                   - "-c"
                   - ":shutdown(timeout=60)"
             ports:
@@ -137,17 +129,7 @@ objects:
               containerPort: 8080
               protocol: TCP
             env:
-            - name: KEYCLOAK_USER
-              value: "${KEYCLOAK_ADMIN_USER}"
-            - name: KEYCLOAK_PASSWORD
-              value: "${KEYCLOAK_ADMIN_PASSWORD}"
-            - name: DS_MIN_POOL_SIZE
-              value: "${DS_MIN_POOL_SIZE}"
-            - name: DS_MAX_POOL_SIZE
-              value: "${DS_MAX_POOL_SIZE}"
-            - name: DB_POOL_FLUSH_STRATEGY
-              value: "${DS_POOL_FLUSH_STRATEGY}"
-            - name: DS_TX_ISOLATION
-              value: "${DS_TX_ISOLATION}"
+            - name: KEYCLOAK_AUTH_SERVER_URL
+              value: "${KEYCLOAK_AUTH_SERVER_URL}"
           terminationGracePeriodSeconds: 75
           restartPolicy: Always
