@@ -74,7 +74,7 @@ parameters:
     required": true
   - displayName: "Database Service Name"
     name: "DATABASE_SERVICE_NAME"
-    value: "postgres"
+    value: "postgresql"
     required: true
   - displayName: "Keycloak Database Name"
     description: "Database name"
@@ -173,7 +173,7 @@ objects:
           - "${APPLICATION_NAME}"
           from:
             kind: ImageStreamTag
-            name: "${APPLICATION_NAME}"
+            name: "${APPLICATION_NAME}:latest"
       replicas: 1
       selector:
         app: "${APPLICATION_NAME}"
