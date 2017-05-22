@@ -1,98 +1,118 @@
 apiVersion: v1
 kind: Template
 labels:
-  demo: coolstore-microservice
-  template: coolstore
+  template: openfact-web-console
 metadata:
   annotations:
-    description: CoolStore demo microservices application template
+    description: Application template for openfact-web-console
     iconClass: icon-java
-    tags: microservice,jboss,spring
-  name: coolstore
+    tags: openfact,nodejs,ubl
+    version: 1.0.0.Final
+    openshift.io/display-name: Openfact-Web-Console
+  name: openfact-web-console
+message: A new Openfact-Web-Console has been created in your project
 objects:
-- apiVersion: v1
-  groupNames: null
-  kind: RoleBinding
+- kind: ImageStream
+  apiVersion: v1
   metadata:
-    name: default_edit
-  roleRef:
-    name: view
-  subjects:
-  - kind: ServiceAccount
-    name: default
-# UI
-- apiVersion: v1
-  kind: ImageStream
-  metadata:
-    name: web-ui
+    name: nodejs-6-centos7
     labels:
-      application: web-ui
+      app: openfact-web-console
   spec:
     tags:
     - name: latest
-- apiVersion: v1
-  kind: BuildConfig
+      annotations:
+        openshift.io/imported-from: centos/nodejs-6-centos7
+      from:
+        kind: DockerImage
+        name: centos/nodejs-6-centos7
+- kind: ImageStream
+  apiVersion: v1
   metadata:
-    name: web-ui
+    name: openfact-web-console
     labels:
-      application: web-ui
+      app: openfact-web-console
+  spec: {}
+- kind: BuildConfig
+  apiVersion: v1
+  metadata:
+    name: openfact-web-console
+    labels:
+      app: openfact-web-console
   spec:
+    source:
+      type: Git
+      git:
+        uri: https://github.com/openfact/openfact-web-console.git
+        ref: master
+    strategy:
+      type: Source
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: nodejs-6-centos7:latest
     output:
       to:
         kind: ImageStreamTag
-        name: web-ui:latest
-    source:
-      git:
-        ref: ${GIT_REF}
-        uri: ${GIT_URI}
-      type: Git
-    strategy:
-      sourceStrategy:
-        env:
-        - name: NPM_MIRROR
-          value: ${NPM_MIRROR}
-        - name: BOWER_MIRROR
-          value: ${BOWER_MIRROR}
-        from:
-          kind: ImageStreamTag
-          name: nodejs:4
-          namespace: openshift
-      type: Source
+        name: openfact-web-console:latest  
     triggers:
-    - imageChange: {}
-      type: ImageChange
+    - type: GitHub
+      github:
+        secret: 52SM2bSykCPjly44uNjy
+    - type: Generic
+      generic:
+        secret: Oe9qdANPg0zXDb1stZyi
+    - type: ImageChange
+      imageChange: {}
     - type: ConfigChange
-- apiVersion: v1
-  kind: DeploymentConfig
+- kind: DeploymentConfig
+  apiVersion: v1
   metadata:
-    name: web-ui
+    name: openfact-web-console
     labels:
-      application: web-ui
+      app: openfact-web-console
   spec:
     replicas: 1
     selector:
-      application: web-ui
-      deploymentconfig: web-ui
+      app: openfact-web-console
+      deploymentconfig: openfact-web-console
     strategy:
+      type: Rolling
+      rollingParams:
+        updatePeriodSeconds: 1
+        intervalSeconds: 1
+        timeoutSeconds: 600
+        maxUnavailable: 25%
+        maxSurge: 25%
       resources: {}
-      type: Recreate
+      activeDeadlineSeconds: 21600 
     template:
       metadata:
         labels:
-          application: web-ui
-          deploymentconfig: web-ui
-      spec:
+          app: openfact-web-console
+          deploymentconfig: openfact-web-console
+        name: openfact-web-console
+      spec:        
         containers:
-        - env:
-          - name: OPENFACT_SERVICE
-            value: openfact
-          - name: HOSTNAME_HTTP
-            value: web-ui:8080
-          image: web-ui
+        - name: openfact-web-console
+          image: openfact-web-console
           imagePullPolicy: Always
-          name: web-ui
+          env:
+          - name: KEYCLOAK_URL
+            value: http://keycloak-${HOSTNAME_SUFFIX}
+          - name: KEYCLOAK_REALM
+            value: ${KEYCLOAK_REALM}          
+          - name: KEYCLOAK_CLIENT_ID
+            value: ${KEYCLOAK_CLIENT_ID}
+          - name: KEYCLOAK_PUBLIC_KEY
+            value: ${KEYCLOAK_PUBLIC_KEY}
+          - name: OPENFACT_ENDPOINT
+            value: http://openfact-${HOSTNAME_SUFFIX}
+          - name: HOSTNAME_HTTP
+            value: openfact-web-console:8080
           ports:
-          - containerPort: 8080
+          - name: 8080-http
+            containerPort: 8080
             protocol: TCP
           livenessProbe:
             failureThreshold: 5
@@ -114,29 +134,29 @@ objects:
             periodSeconds: 5
             successThreshold: 1
             timeoutSeconds: 1
-          resources: {}
+          resources: {}          
           terminationMessagePath: /dev/termination-log
-        dnsPolicy: ClusterFirst
         restartPolicy: Always
+        dnsPolicy: ClusterFirst
         securityContext: {}
         terminationGracePeriodSeconds: 30
     triggers:
-    - imageChangeParams:
+    - type: ImageChange
+      imageChangeParams:
         automatic: true
         containerNames:
-        - web-ui
+        - openfact-web-console
         from:
           kind: ImageStreamTag
-          name: web-ui:latest
-      type: ImageChange
+          name: openfact-web-console:latest      
     - type: ConfigChange
-- apiVersion: v1
-  kind: Service
+- kind: Service
+  apiVersion: v1
   metadata:
     labels:
-      app: web-ui
-      application: web-ui
-    name: web-ui
+      app: openfact-web-console
+      application: openfact-web-console
+    name: openfact-web-console
   spec:
     ports:
     - name: 8080-tcp
@@ -144,68 +164,30 @@ objects:
       protocol: TCP
       targetPort: 8080
     selector:
-      deploymentconfig: web-ui
-- apiVersion: v1
-  kind: Route
+      deploymentconfig: openfact-web-console
+- kind: Route
+  apiVersion: v1
   metadata:
-    name: web-ui
+    name: openfact-web-console
   spec:
     to:
       kind: Service
-      name: web-ui
+      name: openfact-web-console
 parameters:
-- description: Git source URI for application
-  displayName: Git source repository
-  name: GIT_URI
-  required: true
-  value: https://github.com/openfact/openfact-web-console.git
-- displayName: Git branch/tag reference
-  name: GIT_REF
-  required: true
-  value: master
-- description: Maven mirror url. If nexus is deployed locally, use nexus url (e.g. http://nexus.ci:8081/content/groups/public/)
-  displayName: Maven mirror url
-  name: MAVEN_MIRROR_URL
-- description: NPM mirror url. If nexus is deployed locally, use nexus url (e.g. http://nexus.ci:8081/repository/npm/)
-  displayName: NPM mirror url
-  name: NPM_MIRROR
-- description: Bower mirror url. If nexus is deployed locally, use nexus url (e.g. http://nexus.ci:8081/repository/bower-mirror/)
-  displayName: Bower mirror url
-  name: BOWER_MIRROR
-- description: Inventory Service database user name
-  displayName: Inventory Database username
-  from: user[a-zA-Z0-9]{3}
-  generate: expression
-  name: INVENTORY_DB_USERNAME
-  required: true
-- description: Inventory Service database user password
-  displayName: Inventory Database password
-  from: '[a-zA-Z0-9]{8}'
-  generate: expression
-  name: INVENTORY_DB_PASSWORD
-  required: true
-- description: Catalog Service database user name
-  displayName: Catalog Database username
-  from: user[a-zA-Z0-9]{3}
-  generate: expression
-  name: CATALOG_DB_USERNAME
-  required: true
-- description: Catalog Service database user password
-  displayName: Catalog Database password
-  from: '[a-zA-Z0-9]{8}'
-  generate: expression
-  name: CATALOG_DB_PASSWORD
-  required: true
-- description: Decision Server Username
-  name: KIE_SERVER_USER
-  required: true
-  value: brmsAdmin
-- description: Decision Server Password
-  from: '[a-zA-Z]{6}[0-9]{1}!'
-  generate: expression
-  name: KIE_SERVER_PASSWORD
-  required: true
-- description: Decision Server Coolstore Rules Container Spec
-  name: KIE_CONTAINER_DEPLOYMENT
-  required: true
-  value: CoolStoreRulesContainer=com.redhat:coolstore:2.0.0
+  - description: Hostname suffix used for routes e.g. openfact-<HOSTNAME_SUFFIX> inventory-<HOSTNAME_SUFFIX>
+    displayName: Hostname suffix used for routes
+    name: HOSTNAME_SUFFIX
+    required: true
+  - description: Keycloak realm
+    displayName: Keycloak realm
+    name: KEYCLOAK_REALM
+    value: openfact
+    required: true
+  - description: Keycloak Client Id
+    displayName: Keycloak Cliend Id
+    name: KEYCLOAK_CLIENT_ID
+    value: openfact-web-console
+    required: true
+  - description: Keycloak Public Key
+    displayName: Keycloak Public Key
+    name: KEYCLOAK_PUBLIC_KEY
