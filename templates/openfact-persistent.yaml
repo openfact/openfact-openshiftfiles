@@ -99,7 +99,7 @@ objects:
           imagePullPolicy: Always
           env:
           - name: KEYCLOAK_URL
-            value: http://keycloak-${APPLICATION_NAME}.${DOMAIN_NAME}
+            value: http://keycloak-${APPLICATION_NAME}.${DOMAIN_NAME}/auth
           - name: KEYCLOAK_REALM
             value: ${KEYCLOAK_REALM}          
           - name: KEYCLOAK_CLIENT_ID
@@ -263,7 +263,7 @@ objects:
             protocol: TCP
           env:
           - name: KEYCLOAK_AUTH_SERVER_URL
-            value: http://keycloak-${APPLICATION_NAME}.${DOMAIN_NAME}
+            value: http://keycloak-${APPLICATION_NAME}.${DOMAIN_NAME}/auth
           - name: DB_USERNAME
             valueFrom:
               secretKeyRef:

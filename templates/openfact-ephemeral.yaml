@@ -1,0 +1,404 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: openfact
+metadata:
+  annotations:
+    description: Application template for Openfact
+    iconClass: icon-wildfly
+    tags: openfact,javascript,nodejs,java,wildfly,jboss,ubl
+    version: 1.0.0.Final
+    openshift.io/display-name: Openfact
+  name: openfact
+message: "A new Openfact has been created in your project Keycloak\n--------------------\n Admin Username: ${KEYCLOAK_ADMIN_USER}\n Admin Password: ${KEYCLOAK_ADMIN_PASSWORD}"
+objects:
+# Openfact-Web-Console
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    name: nodejs-6-centos7
+    labels:
+      app: openfact-web-console
+  spec:
+    tags:
+    - name: latest
+      annotations:
+        openshift.io/imported-from: centos/nodejs-6-centos7
+      from:
+        kind: DockerImage
+        name: centos/nodejs-6-centos7
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    name: openfact-web-console
+    labels:
+      app: openfact-web-console
+  spec: {}
+- kind: BuildConfig
+  apiVersion: v1
+  metadata:
+    name: openfact-web-console
+    labels:
+      app: openfact-web-console
+  spec:
+    source:
+      type: Git
+      git:
+        uri: https://github.com/openfact/openfact-web-console.git        
+    strategy:
+      type: Source
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: nodejs-6-centos7:latest
+    output:
+      to:
+        kind: ImageStreamTag
+        name: openfact-web-console:latest  
+    triggers:
+    - type: GitHub
+      github:
+        secret: 52SM2bSykCPjly44uNjy
+    - type: Generic
+      generic:
+        secret: Oe9qdANPg0zXDb1stZyi
+    - type: ImageChange
+      imageChange: {}
+    - type: ConfigChange
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: openfact-web-console
+    labels:
+      app: openfact-web-console
+  spec:
+    replicas: 1
+    selector:
+      app: openfact-web-console
+      deploymentconfig: openfact-web-console
+    strategy:
+      type: Rolling
+      rollingParams:
+        updatePeriodSeconds: 1
+        intervalSeconds: 1
+        timeoutSeconds: 600
+        maxUnavailable: 25%
+        maxSurge: 25%
+      resources: {}
+      activeDeadlineSeconds: 21600 
+    template:
+      metadata:
+        labels:
+          app: openfact-web-console
+          deploymentconfig: openfact-web-console
+        name: openfact-web-console
+      spec:        
+        containers:
+        - name: openfact-web-console
+          image: openfact-web-console
+          imagePullPolicy: Always
+          env:
+          - name: KEYCLOAK_URL
+            value: http://keycloak-${APPLICATION_NAME}.${DOMAIN_NAME}/auth
+          - name: KEYCLOAK_REALM
+            value: ${KEYCLOAK_REALM}          
+          - name: KEYCLOAK_CLIENT_ID
+            value: ${KEYCLOAK_CLIENT_ID}
+          - name: KEYCLOAK_PUBLIC_KEY
+            value: ${KEYCLOAK_PUBLIC_KEY}
+          - name: OPENFACT_ENDPOINT
+            value: http://openfact-${APPLICATION_NAME}.${DOMAIN_NAME}
+          - name: HOSTNAME_HTTP
+            value: http://openfact-web-console-${APPLICATION_NAME}.${DOMAIN_NAME}
+          ports:
+          - name: 8080-http
+            containerPort: 8080
+            protocol: TCP
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 120
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources: {}          
+          terminationMessagePath: /dev/termination-log
+        restartPolicy: Always
+        dnsPolicy: ClusterFirst
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    triggers:
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - openfact-web-console
+        from:
+          kind: ImageStreamTag
+          name: openfact-web-console:latest      
+    - type: ConfigChange
+- kind: Service
+  apiVersion: v1
+  metadata:
+    labels:
+      app: openfact-web-console
+      application: openfact-web-console
+    name: openfact-web-console
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080      
+      targetPort: 8080
+      protocol: TCP
+    selector:
+      deploymentconfig: openfact-web-console
+- kind: Route
+  apiVersion: v1
+  metadata:
+    name: openfact-web-console
+  spec:
+    to:
+      kind: Service
+      name: openfact-web-console
+# Openfact
+- kind: Route
+  apiVersion: v1
+  metadata:
+    name: openfact
+    labels:
+      app: openfact
+  spec:
+    to:
+      kind: Service
+      name: openfact
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: openfact
+    labels:
+      app: openfact
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080      
+      targetPort: 8080
+      protocol: TCP
+    selector:
+      app: openfact
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: openfact
+    labels:
+      app: openfact
+  spec:
+    strategy:
+      type: Rolling
+      rollingParams:
+        timeoutSeconds: 10800
+    triggers:
+    - type: ConfigChange
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - openfact
+        from:
+          kind: ImageStreamTag
+          name: openfact:latest
+    replicas: 1
+    selector:
+      app: openfact
+    template:
+      metadata:
+        name: openfact
+        labels:
+          app: openfact
+      spec:
+        containers:
+        - name: openfact
+          image: openfact:latest
+          imagePullPolicy: Always
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                - "/opt/jboss/wildfly/bin/jboss-cli.sh"
+                - "-c"
+                - ":shutdown(timeout=60)"
+          ports:
+          - name: 8080-http
+            containerPort: 8080
+            protocol: TCP
+          env:
+          - name: KEYCLOAK_AUTH_SERVER_URL
+            value: http://keycloak-${APPLICATION_NAME}.${DOMAIN_NAME}/auth
+        terminationGracePeriodSeconds: 75
+        restartPolicy: Always
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    name: openfact
+    labels:
+      app: openfact
+  spec:
+    dockerImageRepository: openfact/openfact
+
+# Keycloak
+- kind: Route
+  apiVersion: v1
+  metadata:
+    name: keycloak
+    labels:
+      app: keycloak      
+  spec:
+    to:
+      kind: Service
+      name: keycloak
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: keycloak
+    labels:
+      app: keycloak
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080      
+      targetPort: 8080
+      protocol: TCP
+    selector:
+      app: keycloak
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: keycloak
+    labels:
+      app: keycloak
+  spec:
+    strategy:
+      type: Rolling
+      rollingParams:
+        timeoutSeconds: 10800
+    triggers:
+    - type: ConfigChange
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - keycloak
+        from:
+          kind: ImageStreamTag
+          name: keycloak:latest
+    replicas: 1
+    selector:
+      app: keycloak
+    template:
+      metadata:
+        name: keycloak
+        labels:
+          app: keycloak
+      spec:
+        containers:
+        - name: keycloak
+          image: keycloak:latest
+          imagePullPolicy: Always
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                - "/opt/jboss/keycloak/bin/jboss-cli.sh"
+                - "-c"
+                - ":shutdown(timeout=60)"
+          ports:
+          - name: 8080-http
+            containerPort: 8080
+            protocol: TCP
+          env:
+          - name: KEYCLOAK_USER
+            valueFrom:
+              secretKeyRef:
+                name: keycloak
+                key: admin-user
+          - name: KEYCLOAK_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: keycloak
+                key: admin-password
+        terminationGracePeriodSeconds: 75
+        restartPolicy: Always
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    name: keycloak
+    labels:
+      app: keycloak
+  spec:
+    dockerImageRepository: openfact/keycloak
+- kind: Secret
+  apiVersion: v1
+  metadata:
+    name: keycloak
+  stringData:
+    admin-user: ${KEYCLOAK_ADMIN_USER}
+    admin-password: ${KEYCLOAK_ADMIN_PASSWORD}
+parameters:
+  - displayName: Domain Name
+    description: Domain of your Openshift installation.
+    name: DOMAIN_NAME
+    value: apps.console.sistcoop.org
+    required: true
+  - displayName: Application Name
+    description: The name for the application.
+    name: APPLICATION_NAME
+    value: openfact
+    required: true
+  - displayName: Openfact Version
+    description: The version of the openfact
+    name: OPENFACT_VERSION
+    value: latest
+    required: true
+
+  # Openfact-Web-Console
+  - description: Keycloak Realm (Openfact Web Console)
+    displayName: Keycloak Realm where the openfact-web-console client will be deployed
+    name: KEYCLOAK_REALM
+    value: openfact
+    required: true
+  - description: Keycloak Client Id (Openfact Web Console)
+    displayName: Keycloak Cliend Id of openfact-web-console
+    name: KEYCLOAK_CLIENT_ID
+    value: openfact-web-console
+    required: true
+  - description: Keycloak Public Key (Openfact Web Console)
+    displayName: Keycloak Public Key, this will be used to create a new client if is required
+    name: KEYCLOAK_PUBLIC_KEY
+
+  # Keycloak
+  - displayName: Keycloak Admin Username (Keycloak Server)
+    description: Keycloak Server Admin username
+    name: KEYCLOAK_ADMIN_USER
+    from: "[a-zA-Z0-9]{8}"
+    generate: expression
+    required: true
+  - displayName: Keycloak Admin Password (Keycloak Server)
+    description: Keycloak Server Admin  password
+    name: KEYCLOAK_ADMIN_PASSWORD
+    from: "[a-zA-Z0-9]{8}"
+    generate: expression
+    required: true
+
+  # Openfact
