@@ -107,7 +107,7 @@ objects:
           - name: KEYCLOAK_PUBLIC_KEY
             value: ${KEYCLOAK_PUBLIC_KEY}
           - name: OPENFACT_ENDPOINT
-            value: http://openfact-${APPLICATION_NAME}.${DOMAIN_NAME}
+            value: http://openfact-${APPLICATION_NAME}.${DOMAIN_NAME}/openfact/rest
           - name: HOSTNAME_HTTP
             value: http://openfact-web-console-${APPLICATION_NAME}.${DOMAIN_NAME}
           ports:
