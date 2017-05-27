@@ -249,6 +249,7 @@ objects:
     resources:
       requests:
         storage: ${VOLUME_CAPACITY}
+    volumeName: ${PERSISTENT_VOLUME_NAME}
 parameters:
 - displayName: Application Name
   description: The name for the application.
@@ -303,3 +304,7 @@ parameters:
   from: "user[a-zA-Z0-9]{3}"
   generate: expression
   required: true
+- displayName: Persistent Volume Name
+  description: Persistent Volume Name
+  name: PERSISTENT_VOLUME_NAME  
+  required: false
