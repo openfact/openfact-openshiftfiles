@@ -1,338 +1,305 @@
----
 kind: Template
 apiVersion: v1
+labels:
+  template: keycloak-persistence
 metadata:
   annotations:
-    description: "Application template for Keycloak (PostgreSQL) 2.5.5.Final"
-    iconClass: "icon-wildfly"
-    tags: "keycloak,java,wildfly,jboss"
-    version: "1.0.0"
-    "openshift.io/display-name": "Keycloak 2.5.5.Final"
-  name: "keycloak-persistent-postgresql"
-  labels:
-    app: "keycloak-persistent"
-    group: "org.sistcoop"
+    description: Application template for Keycloak (PostgreSQL) 2.5.5.Final
+    iconClass: icon-wildfly
+    tags: keycloak,java,wildfly,jboss
+    version: 1.0.0.Final
+    openshift.io/display-name: Keycloak 2.5.5.Final
+  name: keycloak-postgresql
 message: "A new Keycloak service has been created in your project.\n\n Keycloak Server (Master Realm)\n--------------------\n Username: ${KEYCLOAK_ADMIN_USER}\n Password: ${KEYCLOAK_ADMIN_PASSWORD}\n\n PostgreSQL\n--------------------\n Service Name: ${DATABASE_SERVICE_NAME}\n Username: ${DB_USERNAME}\n Password: ${DB_PASSWORD}\n Database Name: ${DB_DATABASE}\n Connection URL: postgresql://${DATABASE_SERVICE_NAME}:5432/"
-parameters:
-  - displayName: "Application Name"
-    description: "The name for the application."
-    name: APPLICATION_NAME
-    value: keycloak
-    required: true
-  - displayName: "Keycloak Image Version"
-    description: "The version of the openfact/keycloak image"
-    name: "KEYCLOAK_VERSION"
-    value: "latest"
-    required": true
-  - displayName: "Keycloak Admin Username"
-    description: "Keycloak Server admin username"
-    name: KEYCLOAK_ADMIN_USER
-    from: "[a-zA-Z0-9]{8}"
-    generate: expression
-    required: true
-  - displayName: "Keycloak Admin Password"
-    description: "Keycloak Server admin  password"
-    name: KEYCLOAK_ADMIN_PASSWORD
-    from: "[a-zA-Z0-9]{8}"
-    generate: expression
-    required: true
-  - displayName: "Keycloak Custom http Route Hostname"
-    description: "Custom hostname for http service route. Leave blank for default hostname, e.g.: <application-name>.<project>.<default-domain-suffix>"
-    name: HOSTNAME_HTTP
-    value: ""
-    required: false
-  - displayName: "Datasource Minimum Pool Size"
-    description: "Sets xa-pool/min-pool-size for the configured datasource."
-    name: DS_MIN_POOL_SIZE
-    required: false
-  - displayName: "Datasource Maximum Pool Size"
-    description: "Sets xa-pool/max-pool-size for the configured datasource."
-    name: DS_MAX_POOL_SIZE
-    required: false
-  - displayName: "Datasource Transaction Isolation"
-    description: "Sets transaction-isolation for the configured datasource."
-    name: DS_TX_ISOLATION
-    required: false
-  - displayName: "Datasource Pool Flush Strategy"
-    description: "Sets flush-strategy for the configured datasource."
-    name: DS_POOL_FLUSH_STRATEGY
-    required: false
-  - displayName: "Database Volume Capacity"
-    description: "Size of persistent storage for database volume."
-    name: "VOLUME_CAPACITY"
-    value: "512Mi"
-    required: true
-  - displayName: "ImageStream Namespace"
-    description: "Namespace in which the ImageStreams for Red Hat Middleware images are installed. These ImageStreams are normally installed in the openshift namespace. You should only need to modify this if you've installed the ImageStreams in a different namespace/project."
-    name: "NAMESPACE"
-    value: "openshift"
-    required: true
-  - displayName: "PostgreSQL Image Version"
-    description: "The version of the PostgreSQL image"
-    name: "POSTGRESQL_VERSION"
-    value: "9.5"
-    required": true
-  - displayName: "Database Service Name"
-    name: "DATABASE_SERVICE_NAME"
-    value: "keycloak-postgresql"
-    required: true
-  - displayName: "Keycloak Database Name"
-    description: "Database name"
-    name: "DB_DATABASE"
-    value: "keycloak"
-    required: true
-  - displayName: "Database Username"
-    description: "Database user name"
-    name: "DB_USERNAME"
-    from: "user[a-zA-Z0-9]{3}"
-    generate: "expression"
-    required: true
-  - displayName: "Database Password"
-    description: "Database user password"
-    name: "DB_PASSWORD"
-    from: "user[a-zA-Z0-9]{3}"
-    generate: "expression"
-    required: true
 objects:
-  - kind: Service
-    apiVersion: v1
-    metadata:
-      name: "${APPLICATION_NAME}"
-      labels:
-        app: "${APPLICATION_NAME}"
-        group: "org.sistcoop"
-      annotations:
-        service.alpha.openshift.io/dependencies: "[{\"name\": \"${DATABASE_SERVICE_NAME}\", \"kind\": \"Service\"}]"
-    spec:
-      ports:
-      - port: 8080
-        targetPort: 8080        
-      selector:
-        app: "${APPLICATION_NAME}"
-        group: "org.sistcoop"
-  - kind: Service
-    apiVersion: v1
-    metadata:
-      name: "${DATABASE_SERVICE_NAME}"
-      labels:
-        app: "${APPLICATION_NAME}"
-        group: "org.sistcoop"
-    spec:
-      ports:
-      - name: postgresql
-        protocol: TCP
-        port: 5432
-        targetPort: 5432
-        nodePort: 0
-      selector:
-        app: "${DATABASE_SERVICE_NAME}"
-        group: "org.sistcoop"
-      type: ClusterIP
-      sessionAffinity: None
-    status:
-      loadBalancer:
-  - kind: Route
-    apiVersion: v1
-    metadata:
-      name: "${APPLICATION_NAME}"
-      labels:
-        app: "${APPLICATION_NAME}"
-        group: "org.sistcoop"
-    spec:
-      host: "${HOSTNAME_HTTP}"
-      to:
-        kind: Service
-        name: "${APPLICATION_NAME}"
-  - kind: ImageStream
-    apiVersion: v1
-    metadata:
-      name: "${APPLICATION_NAME}"
-      labels:
-        app: "${APPLICATION_NAME}"
-        group: "org.sistcoop"
-    spec:
-      dockerImageRepository: "openfact/keycloak-postgres"
-  - kind: DeploymentConfig
-    apiVersion: v1
-    metadata:
-      name: "${APPLICATION_NAME}"
-      labels:
-        app: "${APPLICATION_NAME}"
-        group: "org.sistcoop"
-    spec:
-      strategy:
-        type: Rolling
-        rollingParams:
-          timeoutSeconds: 10800
-      triggers:
-      - type: ConfigChange
-      - type: ImageChange
-        imageChangeParams:
-          automatic: true
-          containerNames:
-          - "${APPLICATION_NAME}"
-          from:
-            kind: ImageStreamTag
-            name: "${APPLICATION_NAME}:latest"
-      replicas: 1
-      selector:
-        app: "${APPLICATION_NAME}"
-      template:
-        metadata:
-          name: "${APPLICATION_NAME}"
-          labels:
-            app: "${APPLICATION_NAME}"
-            group: "org.sistcoop"
-        spec:
-          containers:
-          - name: "${APPLICATION_NAME}"
-            image: "${APPLICATION_NAME}:latest"
-            imagePullPolicy: Always
-            lifecycle:
-              preStop:
-                exec:
-                  command:
-                  - "/opt/jboss/keycloak/bin/jboss-cli.sh"
-                  - "-c"
-                  - ":shutdown(timeout=60)"
-            ports:
-            - name: http
-              containerPort: 8080
-              protocol: TCP
-            env:
-            - name: KEYCLOAK_USER
-              valueFrom:
-                secretKeyRef:
-                  name: "${APPLICATION_NAME}"
-                  key: "admin-user"
-            - name: KEYCLOAK_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: "${APPLICATION_NAME}"
-                  key: "admin-password"
-            - name: DB_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: "${DATABASE_SERVICE_NAME}"
-                  key: "database-user"
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: "${DATABASE_SERVICE_NAME}"
-                  key: "database-password"
-            - name: DB_DATABASE
-              value: "${DB_DATABASE}"
-            - name: DB_ADDR
-              value: "${DATABASE_SERVICE_NAME}" 
-          terminationGracePeriodSeconds: 75
-          restartPolicy: Always
-  - kind: DeploymentConfig
-    apiVersion: v1
-    metadata:
-      name: "${DATABASE_SERVICE_NAME}"
-      labels:
-        app: "${APPLICATION_NAME}"
-        group: "org.sistcoop"
-    spec:
-      strategy:
-        type: Recreate
-      triggers:
-      - type: ConfigChange
-      - type: ImageChange
-        imageChangeParams:
-          automatic: true
-          containerNames:
-          - "${DATABASE_SERVICE_NAME}"
-          from:
-            kind: ImageStreamTag
-            name: "postgresql:${POSTGRESQL_VERSION}"
-            namespace: "${NAMESPACE}"
-          lastTriggeredImage:
-      replicas: 1
-      selector:
-        app: "${DATABASE_SERVICE_NAME}"
-        group: "org.sistcoop"
-      template:
-        metadata:
-          name: "${DATABASE_SERVICE_NAME}"
-          labels:
-            app: "${DATABASE_SERVICE_NAME}"
-            group: "org.sistcoop"
-        spec:
-          terminationGracePeriodSeconds: 60
-          restartPolicy: Always
-          dnsPolicy: ClusterFirst
-          containers:
-          - name: "${DATABASE_SERVICE_NAME}"
-            image: "postgresql"
-            imagePullPolicy: IfNotPresent
-            ports:
-            - containerPort: 5432
-              protocol: TCP
-            readinessProbe:
-              timeoutSeconds: 1
-              initialDelaySeconds: 5
+- kind: Route
+  apiVersion: v1
+  metadata:
+    name: ${APPLICATION_NAME}
+    labels:
+      app: ${APPLICATION_NAME}
+      group: org.keycloak
+  spec:    
+    to:
+      kind: Service
+      name: ${APPLICATION_NAME}
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: ${APPLICATION_NAME}
+    labels:
+      app: ${APPLICATION_NAME}
+      group: org.keycloak
+    annotations:
+      service.alpha.openshift.io/dependencies: "[{\"name\": \"${DATABASE_SERVICE_NAME}\", \"kind\": \"Service\"}]"
+  spec:
+    ports:
+    - port: 8080
+      targetPort: 8080
+    selector:
+      app: ${APPLICATION_NAME}      
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: ${DATABASE_SERVICE_NAME}
+    labels:
+      app: ${DATABASE_SERVICE_NAME}
+      group: org.keycloak
+  spec:
+    ports:
+    - name: 5432-tcp      
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+    selector:
+      app: ${DATABASE_SERVICE_NAME}      
+    type: ClusterIP
+    sessionAffinity: None
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: ${APPLICATION_NAME}
+    labels:
+      app: ${APPLICATION_NAME}
+      group: org.keycloak
+  spec:
+    strategy:
+      type: Rolling
+      rollingParams:
+        timeoutSeconds: 10800
+    triggers:
+    - type: ConfigChange
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${APPLICATION_NAME}
+        from:
+          kind: ImageStreamTag
+          name: ${APPLICATION_NAME}:latest
+    replicas: 1
+    selector:
+      app: ${APPLICATION_NAME}
+    template:
+      metadata:
+        name: ${APPLICATION_NAME}
+        labels:
+          app: ${APPLICATION_NAME}
+          group: org.keycloak
+      spec:
+        containers:
+        - name: ${APPLICATION_NAME}
+          image: ${APPLICATION_NAME}:latest
+          imagePullPolicy: Always
+          lifecycle:
+            preStop:
               exec:
                 command:
-                - "/bin/sh"
-                -  "-i"
-                -  "-c"
-                -  "psql -h 127.0.0.1 -U $POSTGRESQL_USER -q -d $POSTGRESQL_DATABASE -c 'SELECT 1'"
-            livenessProbe:
-              timeoutSeconds: 1
-              initialDelaySeconds: 30
-              tcpSocket:
-                port: 5432
-            volumeMounts:
-            - mountPath: /var/lib/pgsql/data
-              name: "${DATABASE_SERVICE_NAME}-pvol"
-            env:
-            - name: POSTGRESQL_USER
-              valueFrom:
-                secretKeyRef:
-                  name: "${DATABASE_SERVICE_NAME}"
-                  key: "database-user"
-            - name: POSTGRESQL_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: "${DATABASE_SERVICE_NAME}"
-                  key: "database-password"
-            - name: POSTGRESQL_DATABASE
-              value: "${DB_DATABASE}"
-            terminationMessagePath: /dev/termination-log
-            capabilities:
-            securityContext:
-              capabilities:
-              privileged: false
-          volumes:
-          - name: "${DATABASE_SERVICE_NAME}-pvol"
-            persistentVolumeClaim:
-              claimName: "${DATABASE_SERVICE_NAME}-claim"
-    status:
-  - kind: Secret
-    apiVersion: v1
-    metadata:
-      name: "${DATABASE_SERVICE_NAME}"
-    stringData:
-      database-user: "${DB_USERNAME}"
-      database-password: "${DB_PASSWORD}"
-  - kind: Secret
-    apiVersion: v1
-    metadata:
-      name: "${APPLICATION_NAME}"
-    stringData:
-      admin-user: "${KEYCLOAK_ADMIN_USER}"
-      admin-password: "${KEYCLOAK_ADMIN_PASSWORD}"
-  - kind: PersistentVolumeClaim
-    apiVersion: v1
-    metadata:
-      name: "${DATABASE_SERVICE_NAME}-claim"
-      labels:
-        app: "${APPLICATION_NAME}"
-        group: "org.sistcoop"
-    spec:
-      accessModes:
-      - ReadWriteOnce
-      resources:
-        requests:
-          storage: "${VOLUME_CAPACITY}"
+                - "/opt/jboss/keycloak/bin/jboss-cli.sh"
+                - "-c"
+                - ":shutdown(timeout=60)"
+          ports:
+          - name: 8080-tcp
+            containerPort: 8080
+            protocol: TCP
+          env:
+          - name: KEYCLOAK_USER
+            valueFrom:
+              secretKeyRef:
+                name: ${APPLICATION_NAME}
+                key: admin-user
+          - name: KEYCLOAK_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: ${APPLICATION_NAME}
+                key: admin-password
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: ${DATABASE_SERVICE_NAME}
+                key: database-user
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: ${DATABASE_SERVICE_NAME}
+                key: database-password
+          - name: DB_DATABASE
+            value: ${DB_DATABASE}
+          - name: DB_ADDR
+            value: ${DATABASE_SERVICE_NAME}
+        terminationGracePeriodSeconds: 75
+        restartPolicy: Always
+- kind: DeploymentConfig
+  apiVersion: v1
+  metadata:
+    name: ${DATABASE_SERVICE_NAME}
+    labels:
+      app: ${DATABASE_SERVICE_NAME}
+      group: org.keycloak
+  spec:
+    strategy:
+      type: Recreate
+    triggers:
+    - type: ConfigChange
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${DATABASE_SERVICE_NAME}
+        from:
+          kind: ImageStreamTag
+          name: postgresql:${POSTGRESQL_VERSION}
+          namespace: ${NAMESPACE}  
+    replicas: 1
+    selector:
+      app: ${DATABASE_SERVICE_NAME}
+    template:
+      metadata:
+        name: ${DATABASE_SERVICE_NAME}
+        labels:
+          app: ${DATABASE_SERVICE_NAME}
+          group: org.keycloak
+      spec:
+        terminationGracePeriodSeconds: 60
+        restartPolicy: Always
+        dnsPolicy: ClusterFirst
+        containers:
+        - name: ${DATABASE_SERVICE_NAME}
+          image: postgresql
+          imagePullPolicy: IfNotPresent
+          ports:
+          - containerPort: 5432
+            protocol: TCP
+          readinessProbe:
+            timeoutSeconds: 1
+            initialDelaySeconds: 5
+            exec:
+              command:
+              - "/bin/sh"
+              - "-i"
+              - "-c"
+              - "psql -h 127.0.0.1 -U $POSTGRESQL_USER -q -d $POSTGRESQL_DATABASE -c 'SELECT 1'"
+          livenessProbe:
+            timeoutSeconds: 1
+            initialDelaySeconds: 30
+            tcpSocket:
+              port: 5432
+          volumeMounts:
+          - mountPath: /var/lib/pgsql/data
+            name: ${DATABASE_SERVICE_NAME}-pvol
+          env:
+          - name: POSTGRESQL_USER
+            valueFrom:
+              secretKeyRef:
+                name: ${DATABASE_SERVICE_NAME}
+                key: database-user
+          - name: POSTGRESQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: ${DATABASE_SERVICE_NAME}
+                key: database-password
+          - name: POSTGRESQL_DATABASE
+            value: ${DB_DATABASE}
+          terminationMessagePath: /dev/termination-log          
+          securityContext:            
+            privileged: false
+        volumes:
+        - name: ${DATABASE_SERVICE_NAME}-pvol
+          persistentVolumeClaim:
+            claimName: ${DATABASE_SERVICE_NAME}-claim
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    name: ${APPLICATION_NAME}
+    labels:
+      app: ${APPLICATION_NAME}
+      group: org.keycloak    
+  spec:
+    dockerImageRepository: openfact/keycloak-postgres
+- kind: Secret
+  apiVersion: v1
+  metadata:
+    name: ${APPLICATION_NAME}
+    labels:
+      app: ${APPLICATION_NAME}
+      group: org.keycloak
+  stringData:
+    admin-user: ${KEYCLOAK_ADMIN_USER}
+    admin-password: ${KEYCLOAK_ADMIN_PASSWORD}
+- kind: Secret
+  apiVersion: v1
+  metadata:
+    name: ${DATABASE_SERVICE_NAME}
+    labels:
+      app: ${DATABASE_SERVICE_NAME}
+      group: org.keycloak
+  stringData:
+    database-user: ${DB_USERNAME}
+    database-password: ${DB_PASSWORD}
+- kind: PersistentVolumeClaim
+  apiVersion: v1
+  metadata:
+    name: ${DATABASE_SERVICE_NAME}-claim
+    labels:
+      app: ${DATABASE_SERVICE_NAME}
+      group: org.keycloak
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${VOLUME_CAPACITY}
+parameters:
+- displayName: Application Name
+  description: The name for the application.
+  name: APPLICATION_NAME
+  value: keycloak
+  required: true
+- displayName: Keycloak Admin Username
+  description: Keycloak Server admin username
+  name: KEYCLOAK_ADMIN_USER
+  from: "[a-zA-Z0-9]{8}"
+  generate: expression
+  required: true
+- displayName: Keycloak Admin Password
+  description: Keycloak Server admin  password
+  name: KEYCLOAK_ADMIN_PASSWORD
+  from: "[a-zA-Z0-9]{8}"
+  generate: expression
+  required: true
+- displayName: Database Volume Capacity
+  description: Size of persistent storage for database volume.
+  name: VOLUME_CAPACITY
+  value: "512Mi"
+  required: true
+- displayName: ImageStream Namespace
+  description: Namespace in which the ImageStreams for Red Hat Middleware images are installed. These ImageStreams are normally installed in the openshift namespace. You should only need to modify this if you've installed the ImageStreams in a different namespace/project.
+  name: NAMESPACE
+  value: openshift
+  required: true
+- displayName: PostgreSQL Image Version
+  description: The version of the PostgreSQL image
+  name: POSTGRESQL_VERSION
+  value: "9.5"
+  required": true
+- displayName: Database Service Name
+  name: DATABASE_SERVICE_NAME
+  value: keycloak-postgresql
+  required: true
+- displayName: Keycloak Database Name
+  description: Database name
+  name: DB_DATABASE
+  value: keycloak
+  required: true
+- displayName: Database Username
+  description: Database user name
+  name: DB_USERNAME
+  from: "user[a-zA-Z0-9]{3}"
+  generate: expression
+  required: true
+- displayName: Database Password
+  description: Database user password
+  name: DB_PASSWORD
+  from: "user[a-zA-Z0-9]{3}"
+  generate: expression
+  required: true
