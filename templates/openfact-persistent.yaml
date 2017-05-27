@@ -311,8 +311,7 @@ objects:
       spec:
         terminationGracePeriodSeconds: 60
         restartPolicy: Always
-        dnsPolicy: ClusterFirst
-        serviceAccountName: ${SERVICE_ACCOUNT_NAME}
+        dnsPolicy: ClusterFirst        
         containers:
         - name: openfact-postgresql
           image: postgresql
@@ -531,8 +530,7 @@ objects:
       spec:
         terminationGracePeriodSeconds: 60
         restartPolicy: Always
-        dnsPolicy: ClusterFirst
-        serviceAccountName: ${SERVICE_ACCOUNT_NAME}
+        dnsPolicy: ClusterFirst        
         containers:
         - name: keycloak-postgresql
           image: postgresql
@@ -636,11 +634,6 @@ parameters:
     description: Namespace in which the ImageStreams images are installed. These ImageStreams are normally installed in the openshift namespace. You should only need to modify this if you've installed the ImageStreams in a different namespace/project.
     name: NAMESPACE
     value: openshift
-    required: true
-  - displayName: Service Account Name
-    description: The name of the service account to use for the deployment.  The service account should be configured to allow useage of the secret(s) specified by HTTPS_SECRET and JGROUPS_ENCRYPT_SECRET.
-    name: SERVICE_ACCOUNT_NAME
-    value: openfact-service-account
     required: true
   
   # Openfact-Web-Console
