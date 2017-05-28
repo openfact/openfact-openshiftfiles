@@ -74,9 +74,15 @@ objects:
           - name: KEYCLOAK_REALM
             value: ${KEYCLOAK_REALM}
           - name: KEYCLOAK_USERNAME
-            value: ${KEYCLOAK_ADMIN_USERNAME}
+            valueFrom:
+              secretKeyRef:
+                name: ${APPLICATION_NAME}
+                key: admin-user
           - name: KEYCLOAK_PASSWORD
-            value: ${KEYCLOAK_ADMIN_PASSWORD}
+            valueFrom:
+              secretKeyRef:
+                name: ${APPLICATION_NAME}
+                key: admin-password
           - name: KEYCLOAK_CLIENT_ID
             value: ${APPLICATION_NAME}
           - name: HOSTNAME_HTTP
@@ -174,6 +180,13 @@ objects:
     - type: ImageChange
       imageChange: {}
     - type: ConfigChange
+- kind: Secret
+  apiVersion: v1
+  metadata:
+    name: ${APPLICATION_NAME}
+  stringData:
+    admin-user: ${KEYCLOAK_ADMIN_USERNAME}
+    admin-password: ${KEYCLOAK_ADMIN_PASSWORD}
 parameters:
   - description: Application Name
     displayName: Application Name
