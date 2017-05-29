@@ -131,8 +131,8 @@ objects:
           kind: ImageStreamTag
           name: s2i-keycloak:latest
         env:
-        - name: OPENSHIFT_DEFAULT_DATASOURCE
-          value: ${OPENSHIFT_DEFAULT_DATASOURCE}
+        - name: DEFAULT_DATASOURCE
+          value: ${DEFAULT_DATASOURCE}
     output:
       to:
         kind: ImageStreamTag
@@ -159,6 +159,6 @@ parameters:
   required: true
 - description: Datasource Name
   displayName: Datasource Name
-  name: OPENSHIFT_DEFAULT_DATASOURCE
+  name: DEFAULT_DATASOURCE
   value: ExampleDS
   required: true

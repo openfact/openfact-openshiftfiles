@@ -241,8 +241,8 @@ objects:
         env:
         - name: POSTGRESQL_DATABASE
           value: true
-        - name: OPENSHIFT_POSTGRESQL_DATASOURCE
-          value: ${DATASOURCE_NAME}
+        - name: DEFAULT_DATASOURCE
+          value: ${DEFAULT_DATASOURCE}
     output:
       to:
         kind: ImageStreamTag
@@ -313,7 +313,7 @@ parameters:
   required": true
 - displayName: Datasource Name
   description: Datasource Name
-  name: DATASOURCE_NAME
+  name: DEFAULT_DATASOURCE
   value: OpenfactDS
   required: true
 - displayName: Keycloak Database Name
