@@ -76,33 +76,33 @@ objects:
         - name: ${APPLICATION_NAME}
           image: ${APPLICATION_NAME}
           imagePullPolicy: Always
-          lifecycle:
-            preStop:
-              exec:
-                command:
-                - "/opt/jboss/keycloak/bin/jboss-cli.sh"
-                - "-c"
-                - ":shutdown(timeout=60)"
           ports:
           - name: 8080-tcp
             containerPort: 8080
             protocol: TCP
+          env:
+          - name: DATASOURCE
+            value: ${DATASOURCE}
+          - name: WAR_NAME
+            value: ${WAR_NAME}
+          - name: KEYCLOAK_SECURE_DEPLOYMENT_ATTRS
+            value: ${KEYCLOAK_SECURE_DEPLOYMENT_ATTRS}
         terminationGracePeriodSeconds: 75
         restartPolicy: Always
 - kind: ImageStream
   apiVersion: v1
   metadata:
-    name: s2i-keycloak
+    name: s2i-keycloak-wildfly-101-adapter
     labels:
       app: ${APPLICATION_NAME}
   spec:
     tags:
     - name: latest
       annotations:
-        openshift.io/imported-from: openfact/s2i-keycloak
+        openshift.io/imported-from: carlosthe19916/s2i-keycloak-wildfly-101-adapter
       from:
         kind: DockerImage
-        name: openfact/s2i-keycloak
+        name: carlosthe19916/s2i-keycloak-wildfly-101-adapter
 - kind: ImageStream
   apiVersion: v1
   metadata:
@@ -127,10 +127,7 @@ objects:
       sourceStrategy:
         from:
           kind: ImageStreamTag
-          name: s2i-keycloak:latest
-        env:
-        - name: DEFAULT_DATASOURCE
-          value: ${DEFAULT_DATASOURCE}
+          name: s2i-keycloak-wildfly-101-adapter:latest
     output:
       to:
         kind: ImageStreamTag
@@ -157,6 +154,16 @@ parameters:
   required: true
 - description: Datasource Name
   displayName: Datasource Name
-  name: DEFAULT_DATASOURCE
-  value: ExampleDS
+  name: DATASOURCE
+  value: OpenfactDS
+  required: true
+- description: War Name
+  displayName: War Name
+  name: WAR_NAME
+  value: ROOT
+  required: true
+- description: Subsystem
+  displayName: Subsystem
+  name: KEYCLOAK_SECURE_DEPLOYMENT_ATTRS
+  value: auth-server-url=http://localhost:8080/auth,realm=myrealm,resource=sample-application
   required: true
