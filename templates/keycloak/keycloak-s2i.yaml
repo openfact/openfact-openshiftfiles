@@ -1,16 +1,16 @@
 apiVersion: v1
 kind: Template
 labels:
-  template: keycloak-s2i
+  template: s2i-keycloak
 metadata:
   annotations:
-    description: Application template for keycloak-s2i
+    description: Application template for s2i-keycloak
     iconClass: icon-java
-    tags: openfact,nodejs,ubl
+    tags: s2i,keycloak,sso,java,wildfly,jboss
     version: 1.0.0.Final
-    openshift.io/display-name: keycloak-s2i
-  name: keycloak-s2i
-message: A new ${APPLICATION_NAME} has been created in your project
+    openshift.io/display-name: s2i-keycloak
+  name: s2i-keycloak
+message: A new Service called ${APPLICATION_NAME} has been created in your project
 objects:
 - kind: Route
   apiVersion: v1
@@ -29,9 +29,7 @@ objects:
     labels:
       app: ${APPLICATION_NAME}
       group: org.keycloak
-    name: ${APPLICATION_NAME}
-    annotations:
-      service.alpha.openshift.io/dependencies: "[{\"name\": \"${DATABASE_SERVICE_NAME}\", \"kind\": \"Service\"}]"
+    name: ${APPLICATION_NAME}    
   spec:
     ports:
     - name: 8080-tcp
@@ -152,8 +150,8 @@ parameters:
   displayName: Application Name
   name: APPLICATION_NAME
   required: true
-- description: Git Repo
-  displayName: Git repo
+- description: Git Repo url
+  displayName: Git repo url
   name: GIT_REPO
   value: https://github.com/openfact/openfact.git
   required: true
