@@ -83,26 +83,22 @@ objects:
           env:
           - name: DATASOURCE
             value: ${DATASOURCE}
-          - name: WAR_NAME
-            value: ${WAR_NAME}
-          - name: KEYCLOAK_SECURE_DEPLOYMENT_ATTRS
-            value: ${KEYCLOAK_SECURE_DEPLOYMENT_ATTRS}
         terminationGracePeriodSeconds: 75
         restartPolicy: Always
 - kind: ImageStream
   apiVersion: v1
   metadata:
-    name: s2i-keycloak-wildfly-101-adapter
+    name: wildfly-keycloak-adapter-101-centos7
     labels:
       app: ${APPLICATION_NAME}
   spec:
     tags:
     - name: latest
       annotations:
-        openshift.io/imported-from: carlosthe19916/s2i-keycloak-wildfly-101-adapter
+        openshift.io/imported-from: carlosthe19916/wildfly-keycloak-adapter-101-centos7
       from:
         kind: DockerImage
-        name: carlosthe19916/s2i-keycloak-wildfly-101-adapter
+        name: carlosthe19916/wildfly-keycloak-adapter-101-centos7
 - kind: ImageStream
   apiVersion: v1
   metadata:
@@ -127,7 +123,12 @@ objects:
       sourceStrategy:
         from:
           kind: ImageStreamTag
-          name: s2i-keycloak-wildfly-101-adapter:latest
+          name: wildfly-keycloak-adapter-101-centos7:latest
+        env:
+        - name: WAR_NAME
+          value: ${WAR_NAME}
+        - name: KEYCLOAK_SECURE_DEPLOYMENT_ATTRS
+          value: ${KEYCLOAK_SECURE_DEPLOYMENT_ATTRS}
     output:
       to:
         kind: ImageStreamTag
