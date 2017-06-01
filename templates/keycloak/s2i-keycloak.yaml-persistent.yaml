@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Template
 labels:
-  template: keycloak-s2i
+  template: s2i-wildfly-keycloak-adapter
 metadata:
   annotations:
-    description: Application template for keycloak-s2i
+    description: Application template for s2i-wildfly-keycloak-adapter
     iconClass: icon-java
-    tags: openfact,nodejs,ubl
+    tags: s2i,keycloak,sso,java,wildfly,jboss
     version: 1.0.0.Final
-    openshift.io/display-name: keycloak-s2i
-  name: keycloak-s2i
+    openshift.io/display-name: s2i-wildfly-keycloak-adapter
+  name: s2i-wildfly-keycloak-adapter
 message: A new ${APPLICATION_NAME} has been created in your project
 objects:
 - kind: Route
@@ -99,7 +99,7 @@ objects:
             preStop:
               exec:
                 command:
-                - "/opt/jboss/keycloak/bin/jboss-cli.sh"
+                - "/wildfly/bin/jboss-cli.sh"
                 - "-c"
                 - ":shutdown(timeout=60)"
           ports:
@@ -107,8 +107,30 @@ objects:
             containerPort: 8080
             protocol: TCP
           env:
+          - name: KEYCLOAK_SECURE_DEPLOYMENT
+            value: ${KEYCLOAK_SECURE_DEPLOYMENT}  
+          - name: KEYCLOAK_AUTH_SERVER_URL
+            value: ${KEYCLOAK_AUTH_SERVER_URL}
+          - name: KEYCLOAK_REALM
+            value: ${KEYCLOAK_REALM}
+          - name: KEYCLOAK_RESOURCE
+            value: ${KEYCLOAK_RESOURCE}
+          - name: KEYCLOAK_BEARER_ONLY
+            value: ${KEYCLOAK_BEARER_ONLY}
+          - name: KEYCLOAK_SSL_REQUIRED
+            value: ${KEYCLOAK_SSL_REQUIRED}
+          - name: KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS
+            value: ${KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS}
+          - name: KEYCLOAK_INITIAL_ACCESS_TOKEN
+            value: ${KEYCLOAK_INITIAL_ACCESS_TOKEN}
+          - name: POSTGRESQL_DATASOURCE
+            value: ${POSTGRESQL_DATASOURCE}
           - name: POSTGRESQL_SERVICE_HOST 
             value: ${DATABASE_SERVICE_NAME}
+          - name: POSTGRESQL_SERVICE_PORT
+            value: "5432"
+          - name: POSTGRESQL_DATABASE
+            value: ${DB_DATABASE}
           - name: POSTGRESQL_USER
             valueFrom:
               secretKeyRef:
@@ -180,6 +202,8 @@ objects:
           - mountPath: /var/lib/pgsql/data
             name: ${DATABASE_SERVICE_NAME}-pvol
           env:
+          - name: POSTGRESQL_DATABASE
+            value: ${DB_DATABASE}
           - name: POSTGRESQL_USER
             valueFrom:
               secretKeyRef:
@@ -190,8 +214,6 @@ objects:
               secretKeyRef:
                 name: ${DATABASE_SERVICE_NAME}
                 key: database-password
-          - name: POSTGRESQL_DATABASE
-            value: ${DB_DATABASE}
           terminationMessagePath: /dev/termination-log          
           securityContext:            
             privileged: false
@@ -202,17 +224,17 @@ objects:
 - kind: ImageStream
   apiVersion: v1
   metadata:
-    name: s2i-keycloak
+    name: wildfly-keycloak-adapter-101-centos7
     labels:
       app: ${APPLICATION_NAME}
   spec:
     tags:
     - name: latest
       annotations:
-        openshift.io/imported-from: openfact/s2i-keycloak
+        openshift.io/imported-from: carlosthe19916/wildfly-keycloak-adapter-101-centos7
       from:
         kind: DockerImage
-        name: openfact/s2i-keycloak
+        name: carlosthe19916/wildfly-keycloak-adapter-101-centos7
 - kind: ImageStream
   apiVersion: v1
   metadata:
@@ -230,19 +252,14 @@ objects:
     source:
       type: Git
       git:
-        uri: ${GIT_REPO}
-        ref: master
+        ref: ${GIT_REF}
+        uri: ${GIT_URI}
     strategy:
       type: Source
       sourceStrategy:
         from:
           kind: ImageStreamTag
-          name: s2i-keycloak:latest
-        env:
-        - name: POSTGRESQL_DATABASE
-          value: true
-        - name: DEFAULT_DATASOURCE
-          value: ${DEFAULT_DATASOURCE}
+          name: wildfly-keycloak-adapter-101-centos7:latest
     output:
       to:
         kind: ImageStreamTag
@@ -287,14 +304,59 @@ parameters:
   name: APPLICATION_NAME
   value: openfact
   required: true
-- description: Git Repo
-  displayName: Git repo
-  name: GIT_REPO
-  value: https://github.com/openfact/openfact.git
+
+- description: Git source URI for application
+  displayName: Git source repository
+  name: GIT_URI
   required: true
+  value: https://github.com/carlosthe19916/s2i-wildfly-keycloak-adapter-sample.git
+- displayName: Git branch/tag reference
+  name: GIT_REF
+  value: master
+  required: true
+- description: POSTGRESQL Datasource Name. If null, the default is ExampleDS
+  displayName: POSTGRESQL Datasource Name
+  name: POSTGRESQL_DATASOURCE
+  value: PostgreSQLDS
+  required: true
+
+- description: War name to be added to <secure-deployment name="mywar.war">..(e.g. ROOT.war)
+  displayName: War File Name
+  name: KEYCLOAK_SECURE_DEPLOYMENT
+  required: false
+- description: URL of your Keycloak Server (e.g. https://mydomain.com/auth)
+  displayName: Keycloak Server URL
+  name: KEYCLOAK_AUTH_SERVER_URL
+  required: false
+- description: Realm to be created in the Keycloak server (e.g. demo).
+  displayName: Keycloak Realm
+  name: KEYCLOAK_REALM
+  required: false
+- description: The client-id of the application. Each application has a client-id that is used to identify the application
+  displayName: Resource (Client-id)
+  name: KEYCLOAK_RESOURCE
+  required: false
+- description: This should be set to true for services. If enabled the adapter will not attempt to authenticate users, but only verify bearer tokens
+  displayName: Bearer Only (bearer-only)
+  name: KEYCLOAK_BEARER_ONLY
+  required: false
+- description: Ensures that all communication to and from the Keycloak server is over correct HTTPS
+  displayName: SSL Required. Valid values are 'all', 'external' and 'none'.
+  name: KEYCLOAK_SSL_REQUIRED
+  required: false
+- description: If set to true, the adapter will look inside the token for application level role mappings for the user. If false, it will look at the realm level for user role mappings.
+  displayName: Use Resource Role Mappings
+  name: KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS
+  required: false
+
+- description: An initial access token can to be used to create a client on the realm you specified.
+  displayName: Keycloak Initial Access Token
+  name: KEYCLOAK_INITIAL_ACCESS_TOKEN
+  required: false
+
 - displayName: Database Service Name
   name: DATABASE_SERVICE_NAME
-  value: keycloak-postgresql
+  value: postgresql
   required: true
 - displayName: Database Volume Capacity
   description: Size of persistent storage for database volume.
@@ -311,15 +373,9 @@ parameters:
   name: POSTGRESQL_VERSION
   value: "9.5"
   required": true
-- displayName: Datasource Name
-  description: Datasource Name
-  name: DEFAULT_DATASOURCE
-  value: OpenfactDS
-  required: true
-- displayName: Keycloak Database Name
+- displayName: Database Name
   description: Database name
   name: DB_DATABASE
-  value: keycloak
   required: true
 - displayName: Database Username
   description: Database user name

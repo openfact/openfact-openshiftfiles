@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Template
 labels:
-  template: s2i-keycloak
+  template: s2i-wildfly-keycloak-adapter
 metadata:
   annotations:
-    description: Application template for s2i-keycloak
+    description: Application template for s2i-wildfly-keycloak-adapter
     iconClass: icon-java
     tags: s2i,keycloak,sso,java,wildfly,jboss
     version: 1.0.0.Final
-    openshift.io/display-name: s2i-keycloak
-  name: s2i-keycloak
+    openshift.io/display-name: s2i-wildfly-keycloak-adapter
+  name: s2i-wildfly-keycloak-adapter
 message: A new Service called ${APPLICATION_NAME} has been created in your project
 objects:
 - kind: Route
@@ -76,6 +76,13 @@ objects:
         - name: ${APPLICATION_NAME}
           image: ${APPLICATION_NAME}
           imagePullPolicy: Always
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                - "/wildfly/bin/jboss-cli.sh"
+                - "-c"
+                - ":shutdown(timeout=60)"
           ports:
           - name: 8080-tcp
             containerPort: 8080
