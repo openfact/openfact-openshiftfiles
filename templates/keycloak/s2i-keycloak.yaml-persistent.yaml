@@ -167,12 +167,14 @@ objects:
     replicas: 1
     selector:
       app: ${DATABASE_SERVICE_NAME}
+      deploymentconfig: ${DATABASE_SERVICE_NAME}
     template:
       metadata:
         name: ${DATABASE_SERVICE_NAME}
         labels:
           app: ${DATABASE_SERVICE_NAME}
           group: org.keycloak
+          deploymentconfig: ${DATABASE_SERVICE_NAME}
       spec:
         terminationGracePeriodSeconds: 60
         restartPolicy: Always
@@ -376,6 +378,8 @@ parameters:
 - displayName: Database Name
   description: Database name
   name: DB_DATABASE
+  from: "user[a-zA-Z0-9]{3}"
+  generate: expression
   required: true
 - displayName: Database Username
   description: Database user name
