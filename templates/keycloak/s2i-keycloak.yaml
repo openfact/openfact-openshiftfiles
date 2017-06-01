@@ -81,8 +81,16 @@ objects:
             containerPort: 8080
             protocol: TCP
           env:
-          - name: DATASOURCE
-            value: ${DATASOURCE}
+          - name: EXAMPLE_DATASOURCE
+            value: ${EXAMPLE_DATASOURCE}
+          - name: KEYCLOAK_REALM
+            value: ${KEYCLOAK_REALM}
+          - name: KEYCLOAK_RESOURCE
+            value: ${KEYCLOAK_RESOURCE}
+          - name: KEYCLOAK_AUTH_SERVER_URL
+            value: ${KEYCLOAK_AUTH_SERVER_URL}
+          - name: KEYCLOAK_SECURE_DEPLOYMENT
+            value: ${KEYCLOAK_SECURE_DEPLOYMENT}
         terminationGracePeriodSeconds: 75
         restartPolicy: Always
 - kind: ImageStream
@@ -124,11 +132,6 @@ objects:
         from:
           kind: ImageStreamTag
           name: wildfly-keycloak-adapter-101-centos7:latest
-        env:
-        - name: WAR_NAME
-          value: ${WAR_NAME}
-        - name: KEYCLOAK_SECURE_DEPLOYMENT_ATTRS
-          value: ${KEYCLOAK_SECURE_DEPLOYMENT_ATTRS}
     output:
       to:
         kind: ImageStreamTag
@@ -155,16 +158,27 @@ parameters:
   required: true
 - description: Datasource Name
   displayName: Datasource Name
-  name: DATASOURCE
+  name: EXAMPLE_DATASOURCE
   value: OpenfactDS
   required: true
-- description: War Name
-  displayName: War Name
-  name: WAR_NAME
-  value: ROOT
+
+- description: Realm
+  displayName: Realm
+  name: KEYCLOAK_REALM
+  value: myrealm
   required: true
-- description: Subsystem
-  displayName: Subsystem
-  name: KEYCLOAK_SECURE_DEPLOYMENT_ATTRS
-  value: auth-server-url=http://localhost:8080/auth,realm=myrealm,resource=sample-application
+- description: Resource
+  displayName: Resource
+  name: KEYCLOAK_RESOURCE
+  value: myresource
+  required: true
+- description: Auth Server Url
+  displayName: Auth Server Url
+  name: KEYCLOAK_AUTH_SERVER_URL
+  value: http://localhost:8080/auth
+  required: true
+- description: Secure Deployment
+  displayName: Secure Deployment
+  name: KEYCLOAK_SECURE_DEPLOYMENT
+  value: ROOT
   required: true
