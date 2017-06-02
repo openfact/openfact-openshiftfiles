@@ -4,11 +4,11 @@ labels:
   template: keycloak-ephemeral
 metadata:
   annotations:
-    description: Application template for Keycloak 2.5.5.Final
+    description: Application template for Keycloak 3.1.0.Final
     iconClass: icon-wildfly
     tags: keycloak,java,wildfly,jboss
     version: 1.0.0.Final
-    openshift.io/display-name: Keycloak 2.5.5.Final
+    openshift.io/display-name: Keycloak 3.1.0.Final
   name: keycloak
 message: "A new Keycloak service has been created in your project.\n\n Keycloak Server (Master Realm)\n--------------------\n- Username: ${KEYCLOAK_ADMIN_USER}\n- Password: ${KEYCLOAK_ADMIN_PASSWORD}"
 objects:
