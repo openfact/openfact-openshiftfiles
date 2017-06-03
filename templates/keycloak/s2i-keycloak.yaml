@@ -162,56 +162,56 @@ objects:
       imageChange: {}
     - type: ConfigChange
 parameters:
-- description: Application Name
-  displayName: Application Name
-  name: APPLICATION_NAME
-  required: true
+  - description: Application Name
+    displayName: Application Name
+    name: APPLICATION_NAME
+    required: true
 
-- description: Git source URI for application
-  displayName: Git source repository
-  name: GIT_URI
-  required: true
-  value: https://github.com/carlosthe19916/s2i-wildfly-keycloak-adapter-sample.git
-- displayName: Git branch/tag reference
-  name: GIT_REF
-  value: master
-  required: true
-- description: Example Datasource Name. If null, the default is ExampleDS
-  displayName: Example Datasource Name
-  name: EXAMPLE_DATASOURCE
-  value: ExampleDS
-  required: true
+  - description: Git source URI for application
+    displayName: Git source repository
+    name: GIT_URI
+    required: true
+    value: https://github.com/carlosthe19916/s2i-wildfly-keycloak-adapter-sample.git
+  - displayName: Git branch/tag reference
+    name: GIT_REF
+    value: master
+    required: true
+  - description: Example Datasource Name. If null, the default is ExampleDS
+    displayName: Example Datasource Name
+    name: EXAMPLE_DATASOURCE
+    value: ExampleDS
+    required: true
 
-- description: War name to be added to <secure-deployment name="mywar.war">..(e.g. ROOT.war)
-  displayName: War File Name
-  name: KEYCLOAK_SECURE_DEPLOYMENT
-  required: false
-- description: URL of your Keycloak Server (e.g. https://mydomain.com/auth)
-  displayName: Keycloak Server URL
-  name: KEYCLOAK_AUTH_SERVER_URL
-  required: false
-- description: Realm to be created in the Keycloak server (e.g. demo).
-  displayName: Keycloak Realm
-  name: KEYCLOAK_REALM
-  required: false
-- description: The client-id of the application. Each application has a client-id that is used to identify the application
-  displayName: Resource (Client-id)
-  name: KEYCLOAK_RESOURCE
-  required: false
-- description: This should be set to true for services. If enabled the adapter will not attempt to authenticate users, but only verify bearer tokens
-  displayName: Bearer Only (bearer-only)
-  name: KEYCLOAK_BEARER_ONLY
-  required: false
-- description: Ensures that all communication to and from the Keycloak server is over correct HTTPS
-  displayName: SSL Required. Valid values are 'all', 'external' and 'none'.
-  name: KEYCLOAK_SSL_REQUIRED
-  required: false
-- description: If set to true, the adapter will look inside the token for application level role mappings for the user. If false, it will look at the realm level for user role mappings.
-  displayName: Use Resource Role Mappings
-  name: KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS
-  required: false
+  - description: War name to be added to <secure-deployment name="mywar.war">..(e.g. ROOT.war)
+    displayName: War File Name
+    name: KEYCLOAK_SECURE_DEPLOYMENT
+    required: false
+  - description: URL of your Keycloak Server (e.g. https://mydomain.com/auth)
+    displayName: Keycloak Server URL
+    name: KEYCLOAK_AUTH_SERVER_URL
+    required: false
+  - description: Realm to be created in the Keycloak server (e.g. demo).
+    displayName: Keycloak Realm
+    name: KEYCLOAK_REALM
+    required: false
+  - description: The client-id of the application. Each application has a client-id that is used to identify the application
+    displayName: Resource (Client-id)
+    name: KEYCLOAK_RESOURCE
+    required: false
+  - description: This should be set to true for services. If enabled the adapter will not attempt to authenticate users, but only verify bearer tokens
+    displayName: Bearer Only (bearer-only)
+    name: KEYCLOAK_BEARER_ONLY
+    required: false
+  - description: Ensures that all communication to and from the Keycloak server is over correct HTTPS
+    displayName: SSL Required. Valid values are 'all', 'external' and 'none'.
+    name: KEYCLOAK_SSL_REQUIRED
+    required: false
+  - description: If set to true, the adapter will look inside the token for application level role mappings for the user. If false, it will look at the realm level for user role mappings.
+    displayName: Use Resource Role Mappings
+    name: KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS
+    required: false
 
-- description: An initial access token can to be used to create a client on the realm you specified.
-  displayName: Keycloak Initial Access Token
-  name: KEYCLOAK_INITIAL_ACCESS_TOKEN
-  required: false
+  - description: An initial access token can to be used to create a client on the realm you specified.
+    displayName: Keycloak Initial Access Token
+    name: KEYCLOAK_INITIAL_ACCESS_TOKEN
+    required: false
