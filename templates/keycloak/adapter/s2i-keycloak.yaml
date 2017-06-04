@@ -228,6 +228,11 @@ parameters:
     name: KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS
     value: "true"
     required: true
+  - description: If set to true, then cors will be activated
+    displayName: Enable cors
+    name: KEYCLOAK_ENABLE_CORS
+    value: "true"
+    required: true
   - description: An initial access token can to be used to create a client on the realm you specified.
     displayName: Keycloak Initial Access Token
     name: KEYCLOAK_INITIAL_ACCESS_TOKEN
