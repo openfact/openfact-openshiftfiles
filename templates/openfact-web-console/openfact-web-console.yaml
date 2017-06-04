@@ -70,7 +70,7 @@ objects:
               imagePullPolicy: Always
               env:
                 - name: NPM_RUN
-                  value: NPM_RUN
+                  value: ${NPM_RUN}
                 - name: KEYCLOAK_AUTH_SERVER_URL
                   value: ${KEYCLOAK_AUTH_SERVER_URL}
                 - name: KEYCLOAK_REALM

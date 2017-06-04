@@ -167,6 +167,7 @@ parameters:
   - description: Application Name
     displayName: Application Name
     name: APPLICATION_NAME
+    value: openfact
     required: true
   - description: Git source URI for application
     displayName: Git source repository
