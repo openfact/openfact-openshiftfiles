@@ -23,6 +23,19 @@ objects:
       to:
         kind: Service
         name: ${APPLICATION_NAME}
+  - kind: Route
+    apiVersion: v1
+    metadata:
+      labels:
+        app: ${APPLICATION_NAME}
+        group: org.keycloak
+      name: secure-${APPLICATION_NAME}
+    spec:
+      to:
+        kind: Service
+        name: secure-${APPLICATION_NAME}
+      tls:
+        termination: passthrough
   - kind: Service
     apiVersion: v1
     metadata:
@@ -38,6 +51,21 @@ objects:
           port: 8080
           protocol: TCP
           targetPort: 8080
+      selector:
+        deploymentconfig: ${APPLICATION_NAME}
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      labels:
+        app: ${APPLICATION_NAME}
+        group: org.keycloak
+      name: secure-${APPLICATION_NAME}    
+    spec:
+      ports:
+        - name: 8443-tcp
+          port: 8443
+          protocol: TCP
+          targetPort: 8443
       selector:
         deploymentconfig: ${APPLICATION_NAME}
   - kind: Service
@@ -146,6 +174,16 @@ objects:
                     secretKeyRef:
                       name: ${DATABASE_SERVICE_NAME}
                       key: database-password
+                - name: HTTPS_KEYSTORE_DIR
+                  value: /etc/wildfly-secret-volume
+                - name: HTTPS_KEYSTORE
+                  value: ${HTTPS_KEYSTORE}
+                - name: HTTPS_KEYSTORE_TYPE
+                  value: ${HTTPS_KEYSTORE_TYPE}
+                - name: HTTPS_NAME
+                  value: ${HTTPS_NAME}
+                - name: HTTPS_PASSWORD
+                  value: ${HTTPS_PASSWORD}
           terminationGracePeriodSeconds: 75
           restartPolicy: Always
   - kind: DeploymentConfig
@@ -345,6 +383,32 @@ parameters:
     name: POSTGRESQL_DATASOURCE
     value: OpenfactDS
     required: true
+  
+  - displayName: Server Keystore Secret Name
+    description: The name of the secret containing the keystore file
+    name: HTTPS_SECRET
+    value: wildfly-app-secret
+    required: true
+  - displayName: Server Keystore Filename
+    description: The name of the keystore file within the secret
+    name: HTTPS_KEYSTORE
+    value: keystore.jks
+    required: false
+  - displayName: Server Keystore Type
+    description: The type of the keystore file (JKS or JCEKS)
+    name: HTTPS_KEYSTORE_TYPE
+    value: ""
+  - displayName: Server Certificate Name
+    description: The name associated with the server certificate
+    name: HTTPS_NAME
+    value: ""
+    required: false
+  - displayName: Server Keystore Password
+    description: The password for the keystore and certificate
+    name: HTTPS_PASSWORD
+    value: ""
+    required: false
+
   - description: War name to be added to <secure-deployment name="mywar.war">..(e.g. ROOT.war)
     displayName: War File Name
     name: KEYCLOAK_SECURE_DEPLOYMENT
