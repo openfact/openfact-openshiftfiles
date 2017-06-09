@@ -163,6 +163,9 @@ objects:
           from:
             kind: ImageStreamTag
             name: centos7-s2i-nodejs-keycloak-cli:latest
+          env:
+            - name: NG_ARGS
+              value: ${NG_ARGS}
       output:
         to:
           kind: ImageStreamTag
@@ -218,6 +221,12 @@ parameters:
     name: NPM_RUN
     value: openshift
     required: true
+
+  - description: Arguments to execute during ng build --<args>
+    displayName: Angular Cli ng build args
+    name: NF_ARGS
+    value: --aot
+    required: false
 
   - description: Openfact Endpoint Url
     displayName: Openfact Endpoint Url
