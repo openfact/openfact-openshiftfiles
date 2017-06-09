@@ -224,7 +224,7 @@ parameters:
 
   - description: Arguments to execute during ng build --<args>
     displayName: Angular Cli ng build args
-    name: NF_ARGS
+    name: NG_ARGS
     value: --aot
     required: false
 
