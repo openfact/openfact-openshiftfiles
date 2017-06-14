@@ -166,6 +166,10 @@ objects:
           env:
             - name: NG_ARGS
               value: ${NG_ARGS}
+            - name: YARN_ENABLED
+              value: ${YARN_ENABLED}
+            - name: YARN_ARGS
+              value: ${YARN_ARGS}
       output:
         to:
           kind: ImageStreamTag
@@ -225,7 +229,17 @@ parameters:
   - description: Arguments to execute during ng build --<args>
     displayName: Angular Cli ng build args
     name: NG_ARGS
-    value: --aot
+    value: --target=production --environment=prod --aot
+    required: false
+  - description: Is Yarn enabled
+    displayName: Enable Yarn
+    name: YARN_ENABLED
+    value: "true"
+    required: false
+  - description: Yarn arguments on yarn install <args>
+    displayName: Yarn arguments
+    name: YARN_ARGS
+    value: --production=false
     required: false
 
   - description: Openfact Endpoint Url
