@@ -36,19 +36,6 @@ objects:
         name: secure-${APPLICATION_NAME}
       tls:
         termination: passthrough
-  - kind: Route
-    apiVersion: v1
-    metadata:
-      labels:
-        app: ${APPLICATION_NAME}
-        group: org.keycloak
-      name: secure-${APPLICATION_NAME}
-    spec:
-      to:
-        kind: Service
-        name: secure-${APPLICATION_NAME}
-      tls:
-        termination: passthrough
   - kind: Service
     apiVersion: v1
     metadata:
