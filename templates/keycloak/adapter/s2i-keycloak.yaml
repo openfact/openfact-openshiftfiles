@@ -115,10 +115,10 @@ objects:
                 - name: 8080-tcp
                   containerPort: 8080
                   protocol: TCP
-              volumeMounts:
-                - name: ${APPLICATION_NAME}-pvol
-                  mountPath: /etc/wildfly-secret-volume
-                  readOnly: true
+#              volumeMounts:
+#                - name: ${APPLICATION_NAME}-pvol
+#                  mountPath: /etc/wildfly-secret-volume
+#                  readOnly: true
               env:
                 - name: EXAMPLE_DATASOURCE
                   value: ${EXAMPLE_DATASOURCE}          
@@ -151,10 +151,10 @@ objects:
                   value: ${HTTPS_NAME}
                 - name: HTTPS_PASSWORD
                   value: ${HTTPS_PASSWORD}
-          volumes:
-            - name: ${APPLICATION_NAME}-pvol
-              secret:
-                secretName: ${HTTPS_SECRET}
+#          volumes:
+#            - name: ${APPLICATION_NAME}-pvol
+#              secret:
+#                secretName: ${HTTPS_SECRET}
           terminationGracePeriodSeconds: 75
           restartPolicy: Always
   - kind: ImageStream
@@ -209,6 +209,15 @@ objects:
             secret: ${GENERIC_WEBHOOK_SECRET}
         - type: ImageChange
         - type: ConfigChange
+  - kind: Secret
+    apiVersion: v1
+    metadata:
+      name: ${APPLICATION_NAME}
+      labels:
+        app: ${APPLICATION_NAME}
+        group: org.keycloak
+    stringData:
+      access-token: ${KEYCLOAK_INITIAL_ACCESS_TOKEN}
 parameters:
   - description: Application Name
     displayName: Application Name
@@ -245,8 +254,8 @@ parameters:
   - displayName: Server Keystore Secret Name
     description: The name of the secret containing the keystore file
     name: HTTPS_SECRET
-    value: wildfly-app-secret
-    required: true
+#    value: wildfly-app-secret
+    required: false
   - displayName: Server Keystore Filename
     description: The name of the keystore file within the secret
     name: HTTPS_KEYSTORE
